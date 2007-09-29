@@ -1,13 +1,66 @@
-#summary One-sentence summary of this page.
+==Introduction==
 
-= Introduction =
+Using deseb is designed to be very simple.  It integrates itself into django automatically, and monitors your models for structural changes.  (changes that effect your database schema)
 
-Add your content here.
+Traditionally with django when these kinds of changes happened, you had one of three options:
 
+ # lose all your data when django resets your schema
+ # export your data, have django reset your schema, re-import
+ # write your own schema alternation script
 
-= Details =
+The third operation is obviously the safest and most efficient, however it is time consuming and requires extensive knowledge of your particular database backend and SQL.  This is what this project automates for you, by comparing your new models with the existing database schema.
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+It's important to note that no schema generation program can ever be 100% safe and effective.  (this includes "syncdb")  So it's wise to check the generated SQL before you apply it to your database.  However the authors of this program are data-conservative by nature, and every attempt has been made to assure that when the program is the least bit confused as to what it should do, it will do nothing.
+
+==Basic Usage==
+
+We promised it would be dead simple, didn't we?  :)
+
+Assuming you've added "import deseb" to your settings.py, and that you've made a recent change to one of your models (say, add a field) in an app called "myapp", just run the following:
+
+{{{
+./manage sqlevolve my_app
+}}}
+
+Assuming it was a field named "newfield" you added to "mymodel", you'll get the following:
+
+{{{
+BEGIN;
+ALTER TABLE `myapp_mymodel` ADD COLUMN `newfield` varchar(200) NOT NULL;
+COMMIT;
+}}}
+
+If you're happy with its work, simply copy/paste it into your database, or pipe it like this:
+
+{{{
+./manage sqlevolve my_app | mysql mydb
+}}}
+
+The vast majority of changes can be handled completely automatically like this.  However renaming either a field or a model requires one extra step.
+
+===Renaming a Field===
+
+Add an attribute "aka" to your field definition, so it looks like this:
+
+{{{
+new_name = models.CharField(maxlength=200, aka='old_name')
+}}}
+
+===Renaming a Model===
+
+Add an attribute "aka" to your model's meta definition, so it looks like this:
+
+{{{
+class NewName(models.Model):
+    [...]
+    class Meta:
+        aka = 'OldName'
+}}}
+
+And we'll do all the rest.
+
+One more thing:  Anywhere you set an aka attribute, you can set it to either a string or a tuple of strings.  Use the tuples when you have more than one previous name you want to support migrating from.  And if you don't like clutter, when you're sure all your schema's have been updated, feel free to take the 'aka's back out.  :)
+
+==Etc.==
+
+For more complicated usage patterns, read [ManagedDatabaseMigrations Managed Database Migrations].
