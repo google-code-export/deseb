@@ -1,0 +1,76 @@
+Note that this is currently not functional in the stable version of deseb.
+
+=History=
+
+This is a python implementation of a Java-based database migration I built for the USAF a few years back.  Note that this shares no code with my original implementation, just the high-level ideas.
+
+=Requirements=
+
+We view database schema migration as [http://en.wikipedia.org/wiki/Directed_graph#Directed_graph directed graph], with each node representing a specific schema and each edge containing SQL that changes one schema into another.  This is the simplest structure enabling the following:
+
+ * branches
+ * reverse migrations (A->B, B-A)
+
+=Representation=
+
+Schema's are fingerprinted via feeding their representation into a hashing algorithm.  A mapping is kept of known fingerprints, representing a directed graph.  This graph can be cyclical (representing reversible migrations, which we needed), but is not necessarily so.  A migration bias (forward or reverse) is created by the natural history of the project, defined by the first observed instance of a fingerprint in the mapping.  And the mappings themselves are defined by duples (from,to) of fingerprints mapped to SQL statements.
+
+I know this sounds overly complicated in word form, but it's really not.  Check out this diagram:
+
+{{{
+     V1 --> v2 --> v3 --> V4
+             ^______|
+}}}
+
+This would be represented as:
+
+{{{
+mysql_evolutions = [
+  [ (V1,V2), "sql going from V1 to v2" ],
+  [ (V2,V3), "sql going from V2 to v3" ],
+  [ (V3,V2), "sql going from V3 to v2" ],
+  [ (V3,V4), "sql going from V3 to v4" ],
+]
+}}}
+
+A branch would be like this:
+
+{{{
+      /---> V2 --> V2_1
+    V1
+      \---> V3 --> v3_1
+}}}
+
+{{{
+mysql_evolutions = [
+  [ (V1,V2), "sql going from V1 to v2" ],
+  [ (V1,V3), "sql going from V1 to v3" ],
+  [ (V2,V2_1), "sql going from V2 to v2_1" ],
+  [ (V3,V3_1), "sql going from V3 to v3_1" ],
+]
+}}}
+
+Multiple SQL commands are also supported:
+
+{{{
+mysql_evolutions = [
+  [ (V1,V2), "sql going from V1 to v2",
+             "another sql command",
+             "another sql command",
+  ],
+  [ (V2,V3), "sql going from V2 to v3",
+             "another sql command",
+             "another sql command",
+             "another sql command",
+  ],
+]
+}}}
+
+When you run the sqlevolve command (or should we call it something different?) it will calculate the fingerprint of the current schema.  If it's a known fingerprint, it will upgrade it to the latest schema in whatever branch it's in.  (or upgrade/downgrade to a specific fingerprint if one is given)  If it's an unknown fingerprint, it runs the introspection code as usual.  This lets you use any pattern of:
+
+ * all introspection
+ * mostly introspection, with occasional custom migration
+ * all custom migration, fed by introspection
+ * all custom migration, fed by a DBA
+
+These migration lists are stored in a variable "mysql_evolutions" (or "postgresql_evolutions", etc.) in the file "schema_evolution.py" next to your "models.py".
