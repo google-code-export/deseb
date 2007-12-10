@@ -23,7 +23,6 @@ class Choice(models.Model):
 And you add {{{creatorIp = models.IPAddressField()}}} to class {{{Poll}}}, and then run {{{./manage evolvedb}}}:
 
 {{{
-$ ./manage.py evolvedb
 fingerprint for 'case01_add_field' is 'fv1:1116633177' (unrecognized)
 case01_add_field: the following schema upgrade is available:
 
@@ -37,10 +36,19 @@ do you want to save these commands in case01_add_field.schema_evolution?
 type 'yes' to continue, or 'no' to cancel: yes
 }}}
 
-Then you deploy your new code to production:
+Your schema has now been upgraded, and the following has been recorded to {{{case01_add_field/schema_evolution.py}}}:
 
 {{{
-$ ./manage.py evolvedb
+mysql_evolutions = [
+    [('fv1:1116633177','fv1:949078369'), # generated 2007-12-09 17:40:23.114770
+        "ALTER TABLE `case01_add_field_poll` ADD COLUMN `creatorIp` char(15) NOT NULL;",
+    ],
+] # don't delete this comment! ## mysql_evolutions_end ##
+}}}
+
+Then you deploy your new code to production, again with {{{./manage evolvedb}}}:
+
+{{{
 case01_add_field.schema_evolution module found (2 fingerprints, 1 evolutions)
 fingerprint for 'case01_add_field' is 'fv1:1116633177' (recognized)
          and a managed schema upgrade to 'fv1:949078369' is available:
