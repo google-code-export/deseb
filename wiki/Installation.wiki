@@ -1,7 +1,5 @@
 =Installation Instructions=
 
- # download: http://deseb.googlecode.com/files/deseb-v0_1.tar.gz
- # untar into your /<python_path>/site-packages directory
- # add "import deseb" to your settings.py
-
-Wasn't that easy?  :)  Now go read the [Usage usage] page.
+ # cd into your project directory (where your {{{manage.py}}} is) or anywhere in your PYTHON_PATH
+ # run: {{{svn checkout http://deseb.googlecode.com/svn/trunk/ deseb}}}
+ # add {{{import deseb}}} to the top of {{{settings.py}}}
