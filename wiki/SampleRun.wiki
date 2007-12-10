@@ -1,5 +1,5 @@
 = Sample Run #1=
-Adding a field to an existing model.
+(adding a field to an existing model)
 
 Assume this is your manage.py:
 {{{
