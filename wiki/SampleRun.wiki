@@ -1,3 +1,4 @@
+#labels Featured
 = Sample Run #1=
 (adding a field to an existing model)
 
